@@ -1,0 +1,59 @@
+public DataTable ReadExcelContents(string fileName)
+{
+    try
+    {
+        OleDbConnection connection = new OleDbConnection();
+
+        connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Extended Properties=Excel 8.0;Data Source=" + fileName); //Excel 97-2003, .xls
+        //string excelQuery = @"Select [Day],[Outlook],[temp],[Humidity],[Wind], [PlaySport]
+        //   FROM [Sheet1$]";
+
+        string excelQuery = @"Select * FROM [Sheet1$]";
+        connection.Open();
+        OleDbCommand cmd = new OleDbCommand(excelQuery, connection);
+        OleDbDataAdapter adapter = new OleDbDataAdapter();
+        adapter.SelectCommand = cmd;
+        DataSet ds = new DataSet();
+        adapter.Fill(ds);
+        DataTable dt = ds.Tables[0];
+
+
+        dataGridView1.DataSource = dt.DefaultView;
+        connection.Close();
+        return dt;
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show("Program can't read file. " + ex.Message, "Please Note", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return null;
+    }
+}
+DataTable table = new DataTable();
+OleDbConnection conn = new OleDbConnection();
+
+OleDbCommand cmd = new OleDbCommand();
+string path = @"E:\ICD101.xls";//duong dan toi file excel
+string Strconn = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path;
+Strconn += ";Extended Properties=Excel 8.0";
+conn.ConnectionString = Strconn;
+cmd.CommandText = "Select * from [exceltmp$]";//ten sheet
+cmd.Connection = conn;
+
+cmd.Connection = conn;
+OleDbDataAdapter dap = new OleDbDataAdapter(cmd);
+dap.Fill(table);
+dataGridView2.DataSource = table;
+
+string strSqlconn1 = "Data Source =MAY15; Initial Catalog =temp; Integrated Security = True";
+SqlConnection conn1 = new SqlConnection(strSqlconn1);
+conn1.Open();
+System.Data.SqlClient.SqlBulkCopy copy = new System.Data.SqlClient.SqlBulkCopy(conn1);
+copy.DestinationTableName = "codedmchung";//ten table trong sql
+copy.ColumnMappings.Add("Codedm", "CodeDM"); 
+copy.ColumnMappings.Add("Ma_ICD", "Ma_ch");//tên c?t bên excel và tên c?t tuong ?ng trong sql 
+copy.ColumnMappings.Add("Ten_ICD", "Ten_ch");
+
+copy.WriteToServer(table);
+copy.Close();
+conn1.Close();
+conn1.Dispose();
